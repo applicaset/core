@@ -28,25 +28,37 @@ func NewHandler(svc Service) *Handler {
 
 	h.r = chi.NewRouter()
 
-	h.r.Get("/", ListHandler(svc))
-	h.r.Post("/", CreateHandler(svc))
-	h.r.Get("/{id}", ReadHandler(svc))
-	h.r.Put("/{id}", ReplaceHandler(svc))
-	h.r.Delete("/{id}", DeleteHandler(svc))
+	h.r.Get("/{kind}", ListHandler(svc))
+	h.r.Post("/{kind}", CreateHandler(svc))
+	h.r.Get("/{kind}/{id}", ReadHandler(svc))
+	h.r.Put("/{kind}/{id}", ReplaceHandler(svc))
+	h.r.Delete("/{kind}/{id}", DeleteHandler(svc))
 
 	return h
 }
 
 func ListHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		res, err := svc.List(r.Context())
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+		kind := chi.URLParam(r, "kind")
 
-			_ = json.NewEncoder(w).Encode(HTTPError{
-				Message: "Unexpected error occurred",
-				Error:   err.Error(),
-			})
+		res, err := svc.List(r.Context(), kind)
+		if err != nil {
+			switch {
+			case errors.As(err, &KindNotFoundError{}):
+				w.WriteHeader(http.StatusNotFound)
+
+				_ = json.NewEncoder(w).Encode(HTTPError{
+					Message: "Invalid kind",
+					Error:   err.Error(),
+				})
+			default:
+				w.WriteHeader(http.StatusInternalServerError)
+
+				_ = json.NewEncoder(w).Encode(HTTPError{
+					Message: "Unexpected error occurred",
+					Error:   err.Error(),
+				})
+			}
 
 			return
 		}
@@ -57,6 +69,8 @@ func ListHandler(svc Service) http.HandlerFunc {
 
 func CreateHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		kind := chi.URLParam(r, "kind")
+
 		var req GenericItem
 
 		err := json.NewDecoder(r.Body).Decode(&req)
@@ -72,7 +86,7 @@ func CreateHandler(svc Service) http.HandlerFunc {
 			return
 		}
 
-		err = svc.Create(r.Context(), req)
+		err = svc.Create(r.Context(), kind, req)
 		if err != nil {
 			switch {
 			case errors.As(err, &ItemExistsError{}):
@@ -101,11 +115,19 @@ func CreateHandler(svc Service) http.HandlerFunc {
 
 func ReadHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		kind := chi.URLParam(r, "kind")
 		id := chi.URLParam(r, "id")
 
-		res, err := svc.Read(r.Context(), id)
+		res, err := svc.Read(r.Context(), kind, id)
 		if err != nil {
 			switch {
+			case errors.As(err, &KindNotFoundError{}):
+				w.WriteHeader(http.StatusNotFound)
+
+				_ = json.NewEncoder(w).Encode(HTTPError{
+					Message: "Invalid kind",
+					Error:   err.Error(),
+				})
 			case errors.As(err, &ItemNotFoundError{}):
 				w.WriteHeader(http.StatusNotFound)
 
@@ -131,6 +153,7 @@ func ReadHandler(svc Service) http.HandlerFunc {
 
 func ReplaceHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		kind := chi.URLParam(r, "kind")
 		id := chi.URLParam(r, "id")
 
 		var req GenericItem
@@ -148,9 +171,16 @@ func ReplaceHandler(svc Service) http.HandlerFunc {
 			return
 		}
 
-		err = svc.Replace(r.Context(), id, req)
+		err = svc.Replace(r.Context(), kind, id, req)
 		if err != nil {
 			switch {
+			case errors.As(err, &KindNotFoundError{}):
+				w.WriteHeader(http.StatusNotFound)
+
+				_ = json.NewEncoder(w).Encode(HTTPError{
+					Message: "Invalid kind",
+					Error:   err.Error(),
+				})
 			case errors.As(err, &ItemNotFoundError{}):
 				w.WriteHeader(http.StatusNotFound)
 
@@ -176,11 +206,19 @@ func ReplaceHandler(svc Service) http.HandlerFunc {
 
 func DeleteHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		kind := chi.URLParam(r, "kind")
 		id := chi.URLParam(r, "id")
 
-		err := svc.Delete(r.Context(), id)
+		err := svc.Delete(r.Context(), kind, id)
 		if err != nil {
 			switch {
+			case errors.As(err, &KindNotFoundError{}):
+				w.WriteHeader(http.StatusNotFound)
+
+				_ = json.NewEncoder(w).Encode(HTTPError{
+					Message: "Invalid kind",
+					Error:   err.Error(),
+				})
 			case errors.As(err, &ItemNotFoundError{}):
 				w.WriteHeader(http.StatusNotFound)
 

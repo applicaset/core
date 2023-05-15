@@ -6,16 +6,21 @@ import (
 )
 
 type Store struct {
-	records map[string]GenericItem
+	db map[string]map[string]GenericItem
 	sync.Mutex
 }
 
-func (s *Store) List(ctx context.Context) ([]GenericItem, error) {
-	res := make([]GenericItem, len(s.records))
+func (s *Store) List(ctx context.Context, kind string) ([]GenericItem, error) {
+	res := make([]GenericItem, len(s.db))
+
+	table, ok := s.db[kind]
+	if !ok {
+		return nil, KindNotFoundError{Name: kind}
+	}
 
 	i := 0
-	for k := range s.records {
-		res[i] = s.records[k]
+	for k := range table {
+		res[i] = table[k]
 
 		i++
 	}
@@ -23,23 +28,33 @@ func (s *Store) List(ctx context.Context) ([]GenericItem, error) {
 	return res, nil
 }
 
-func (s *Store) Create(ctx context.Context, req GenericItem) error {
+func (s *Store) Create(ctx context.Context, kind string, req GenericItem) error {
 	s.Lock()
 	defer s.Unlock()
 
-	for k := range s.records {
+	_, ok := s.db[kind]
+	if !ok {
+		s.db[kind] = make(map[string]GenericItem)
+	}
+
+	for k := range s.db[kind] {
 		if req.GetID() == k {
 			return ItemExistsError{ID: k}
 		}
 	}
 
-	s.records[req.GetID()] = req
+	s.db[kind][req.GetID()] = req
 
 	return nil
 }
 
-func (s *Store) Read(ctx context.Context, id string) (GenericItem, error) {
-	res, ok := s.records[id]
+func (s *Store) Read(ctx context.Context, kind string, id string) (GenericItem, error) {
+	table, ok := s.db[kind]
+	if !ok {
+		return nil, KindNotFoundError{Name: kind}
+	}
+
+	res, ok := table[id]
 	if !ok {
 		return nil, ItemNotFoundError{ID: id}
 	}
@@ -47,28 +62,38 @@ func (s *Store) Read(ctx context.Context, id string) (GenericItem, error) {
 	return res, nil
 }
 
-func (s *Store) Replace(ctx context.Context, id string, req GenericItem) error {
+func (s *Store) Replace(ctx context.Context, kind string, id string, req GenericItem) error {
 	s.Lock()
 	defer s.Unlock()
 
-	if _, ok := s.records[id]; !ok {
+	table, ok := s.db[kind]
+	if !ok {
+		return KindNotFoundError{Name: kind}
+	}
+
+	if _, ok := table[id]; !ok {
 		return ItemNotFoundError{ID: id}
 	}
 
-	s.records[id] = req
+	s.db[kind][id] = req
 
 	return nil
 }
 
-func (s *Store) Delete(ctx context.Context, id string) error {
+func (s *Store) Delete(ctx context.Context, kind string, id string) error {
 	s.Lock()
 	defer s.Unlock()
 
-	if _, ok := s.records[id]; !ok {
+	table, ok := s.db[kind]
+	if !ok {
+		return KindNotFoundError{Name: kind}
+	}
+
+	if _, ok := table[id]; !ok {
 		return ItemNotFoundError{ID: id}
 	}
 
-	delete(s.records, id)
+	delete(s.db[kind], id)
 
 	return nil
 }
@@ -77,6 +102,6 @@ var _ Service = new(Store)
 
 func NewStore() *Store {
 	return &Store{
-		records: make(map[string]GenericItem),
+		db: make(map[string]map[string]GenericItem),
 	}
 }

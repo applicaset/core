@@ -28,8 +28,8 @@ var _ = Describe("Handlers", func() {
 
 		h := NewHandler(svc)
 
-		It("should be empty", func() {
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
+		It("should fail on list unknown kind", func() {
+			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 
 			w := httptest.NewRecorder()
 
@@ -39,14 +39,12 @@ var _ = Describe("Handlers", func() {
 
 			defer func() { _ = res.Body.Close() }()
 
-			Expect(res.StatusCode).Should(Equal(http.StatusOK))
+			Expect(res.StatusCode).Should(Equal(http.StatusNotFound))
 
-			var rsp ListResponse
+			var rsp map[string]interface{}
 
 			err := json.NewDecoder(res.Body).Decode(&rsp)
 			Expect(err).ShouldNot(HaveOccurred())
-
-			Expect(rsp.Items).Should(BeEmpty())
 		})
 	})
 
@@ -58,9 +56,9 @@ var _ = Describe("Handlers", func() {
 		h := NewHandler(svc)
 
 		BeforeAll(func() {
-			reqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz"}`)
+			reqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			req := httptest.NewRequest(http.MethodPost, "/", reqBody)
+			req := httptest.NewRequest(http.MethodPost, "/foo", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -77,7 +75,8 @@ var _ = Describe("Handlers", func() {
 			err := json.NewDecoder(res.Body).Decode(&rsp)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(rsp).Should(HaveKeyWithValue("id", "foo"))
+			Expect(rsp).Should(HaveKeyWithValue("id", "foo1"))
+			Expect(rsp).Should(HaveKeyWithValue("kind", "foo"))
 			Expect(rsp).Should(HaveKeyWithValue("bar", "baz"))
 			Expect(rsp).Should(HaveKey("uuid"))
 			Expect(rsp).Should(HaveKey("createdAt"))
@@ -85,7 +84,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should have 1 item", func() {
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
 
 			w := httptest.NewRecorder()
 
@@ -105,8 +104,8 @@ var _ = Describe("Handlers", func() {
 			Expect(rsp.Items).Should(HaveLen(1))
 		})
 
-		It("should be able to get", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+		It("should be able to read", func() {
+			req := httptest.NewRequest(http.MethodGet, "/foo/foo1", nil)
 
 			w := httptest.NewRecorder()
 
@@ -123,7 +122,8 @@ var _ = Describe("Handlers", func() {
 			err := json.NewDecoder(res.Body).Decode(&rsp)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(rsp).Should(HaveKeyWithValue("id", "foo"))
+			Expect(rsp).Should(HaveKeyWithValue("id", "foo1"))
+			Expect(rsp).Should(HaveKeyWithValue("kind", "foo"))
 			Expect(rsp).Should(HaveKeyWithValue("bar", "baz"))
 			Expect(rsp).Should(HaveKey("uuid"))
 			Expect(rsp).Should(HaveKey("createdAt"))
@@ -131,10 +131,29 @@ var _ = Describe("Handlers", func() {
 			Expect(rsp["updatedAt"]).Should(Equal(rsp["createdAt"]))
 		})
 
-		It("should not be able to create again", func() {
-			reqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz"}`)
+		It("should fail on read from unknown kind", func() {
+			req := httptest.NewRequest(http.MethodGet, "/bar/bar1", nil)
 
-			req := httptest.NewRequest(http.MethodPost, "/", reqBody)
+			w := httptest.NewRecorder()
+
+			h.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			defer func() { _ = res.Body.Close() }()
+
+			Expect(res.StatusCode).Should(Equal(http.StatusNotFound))
+
+			var rsp map[string]interface{}
+
+			err := json.NewDecoder(res.Body).Decode(&rsp)
+			Expect(err).ShouldNot(HaveOccurred())
+		})
+
+		It("should not be able to create again", func() {
+			reqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
+
+			req := httptest.NewRequest(http.MethodPost, "/foo", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -162,9 +181,9 @@ var _ = Describe("Handlers", func() {
 
 		h := NewHandler(svc)
 
-		reqBody := bytes.NewBufferString(`{"id":"foo","bar":INVALID JSON}`)
+		reqBody := bytes.NewBufferString(`{"id":"foo1","bar":INVALID JSON}`)
 
-		req := httptest.NewRequest(http.MethodPost, "/", reqBody)
+		req := httptest.NewRequest(http.MethodPost, "/foo", reqBody)
 
 		w := httptest.NewRecorder()
 
@@ -194,9 +213,9 @@ var _ = Describe("Handlers", func() {
 		h := NewHandler(svc)
 
 		BeforeAll(func() {
-			createReqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz"}`)
+			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -208,9 +227,9 @@ var _ = Describe("Handlers", func() {
 
 			Expect(createRes.StatusCode).Should(Equal(http.StatusCreated))
 
-			updateReqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz2", "bool": true}`)
+			updateReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz2", "bool": true}`)
 
-			updateReq := httptest.NewRequest(http.MethodPut, "/foo", updateReqBody)
+			updateReq := httptest.NewRequest(http.MethodPut, "/foo/foo1", updateReqBody)
 
 			w2 := httptest.NewRecorder()
 
@@ -224,7 +243,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should be updated", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+			req := httptest.NewRequest(http.MethodGet, "/foo/foo1", nil)
 
 			w := httptest.NewRecorder()
 
@@ -241,7 +260,8 @@ var _ = Describe("Handlers", func() {
 			err := json.NewDecoder(res.Body).Decode(&rsp)
 			Expect(err).ShouldNot(HaveOccurred())
 
-			Expect(rsp).Should(HaveKeyWithValue("id", "foo"))
+			Expect(rsp).Should(HaveKeyWithValue("id", "foo1"))
+			Expect(rsp).Should(HaveKeyWithValue("kind", "foo"))
 			Expect(rsp).Should(HaveKeyWithValue("bar", "baz2"))
 			Expect(rsp).Should(HaveKeyWithValue("bool", true))
 			Expect(rsp["updatedAt"]).ShouldNot(Equal(rsp["createdAt"]))
@@ -256,9 +276,9 @@ var _ = Describe("Handlers", func() {
 		h := NewHandler(svc)
 
 		BeforeAll(func() {
-			createReqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz"}`)
+			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -272,9 +292,9 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should fail", func() {
-			reqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz2", BAD JSON}`)
+			reqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz2", BAD JSON}`)
 
-			req := httptest.NewRequest(http.MethodPut, "/foo", reqBody)
+			req := httptest.NewRequest(http.MethodPut, "/foo/foo1", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -302,19 +322,35 @@ var _ = Describe("Handlers", func() {
 
 		h := NewHandler(svc)
 
-		reqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz2", "bool": true}`)
+		BeforeAll(func() {
+			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-		req := httptest.NewRequest(http.MethodPut, "/foo", reqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
 
-		w := httptest.NewRecorder()
+			w := httptest.NewRecorder()
 
-		h.ServeHTTP(w, req)
+			h.ServeHTTP(w, createReq)
 
-		res := w.Result()
+			createRes := w.Result()
 
-		defer func() { _ = res.Body.Close() }()
+			defer func() { _ = createRes.Body.Close() }()
+
+			Expect(createRes.StatusCode).Should(Equal(http.StatusCreated))
+		})
 
 		It("should fail", func() {
+			reqBody := bytes.NewBufferString(`{"id":"foo2","bar":"baz2", "bool": true}`)
+
+			req := httptest.NewRequest(http.MethodPut, "/foo/foo2", reqBody)
+
+			w := httptest.NewRecorder()
+
+			h.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			defer func() { _ = res.Body.Close() }()
+
 			Expect(res.StatusCode).Should(Equal(http.StatusNotFound))
 
 			var rsp map[string]interface{}
@@ -323,6 +359,29 @@ var _ = Describe("Handlers", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(rsp).Should(HaveKeyWithValue("message", "Item not found"))
+		})
+
+		It("should fail on replace in unknown kind", func() {
+			reqBody := bytes.NewBufferString(`{"id":"foo2","bar":"baz2", "bool": true}`)
+
+			req := httptest.NewRequest(http.MethodPut, "/bar/bar2", reqBody)
+
+			w := httptest.NewRecorder()
+
+			h.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			defer func() { _ = res.Body.Close() }()
+
+			Expect(res.StatusCode).Should(Equal(http.StatusNotFound))
+
+			var rsp map[string]interface{}
+
+			err := json.NewDecoder(res.Body).Decode(&rsp)
+			Expect(err).ShouldNot(HaveOccurred())
+
+			Expect(rsp).Should(HaveKeyWithValue("message", "Invalid kind"))
 		})
 	})
 
@@ -334,9 +393,9 @@ var _ = Describe("Handlers", func() {
 		h := NewHandler(svc)
 
 		BeforeAll(func() {
-			createReqBody := bytes.NewBufferString(`{"id":"foo","bar":"baz"}`)
+			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -348,7 +407,7 @@ var _ = Describe("Handlers", func() {
 
 			Expect(createRes.StatusCode).Should(Equal(http.StatusCreated))
 
-			deleteReq := httptest.NewRequest(http.MethodDelete, "/foo", nil)
+			deleteReq := httptest.NewRequest(http.MethodDelete, "/foo/foo1", nil)
 
 			w2 := httptest.NewRecorder()
 
@@ -362,7 +421,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should be not found", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+			req := httptest.NewRequest(http.MethodGet, "/foo/foo1", nil)
 
 			w := httptest.NewRecorder()
 
@@ -390,17 +449,33 @@ var _ = Describe("Handlers", func() {
 
 		h := NewHandler(svc)
 
-		req := httptest.NewRequest(http.MethodDelete, "/foo", nil)
+		BeforeAll(func() {
+			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-		w := httptest.NewRecorder()
+			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
 
-		h.ServeHTTP(w, req)
+			w := httptest.NewRecorder()
 
-		res := w.Result()
+			h.ServeHTTP(w, createReq)
 
-		defer func() { _ = res.Body.Close() }()
+			createRes := w.Result()
+
+			defer func() { _ = createRes.Body.Close() }()
+
+			Expect(createRes.StatusCode).Should(Equal(http.StatusCreated))
+		})
 
 		It("should fail", func() {
+			req := httptest.NewRequest(http.MethodDelete, "/foo/foo2", nil)
+
+			w := httptest.NewRecorder()
+
+			h.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			defer func() { _ = res.Body.Close() }()
+
 			Expect(res.StatusCode).Should(Equal(http.StatusNotFound))
 
 			var rsp map[string]interface{}
@@ -409,6 +484,25 @@ var _ = Describe("Handlers", func() {
 			Expect(err).ShouldNot(HaveOccurred())
 
 			Expect(rsp).Should(HaveKeyWithValue("message", "Item not found"))
+		})
+
+		It("should fail on delete from unknown kind", func() {
+			req := httptest.NewRequest(http.MethodDelete, "/bar/bar1", nil)
+
+			w := httptest.NewRecorder()
+
+			h.ServeHTTP(w, req)
+
+			res := w.Result()
+
+			defer func() { _ = res.Body.Close() }()
+
+			Expect(res.StatusCode).Should(Equal(http.StatusNotFound))
+
+			var rsp map[string]interface{}
+
+			err := json.NewDecoder(res.Body).Decode(&rsp)
+			Expect(err).ShouldNot(HaveOccurred())
 		})
 	})
 })
