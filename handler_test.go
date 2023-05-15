@@ -22,7 +22,9 @@ var _ = BeforeSuite(func() {
 
 var _ = Describe("Handlers", func() {
 	Context("with fresh store", func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 
@@ -49,7 +51,9 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("after creating an item", Ordered, func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 
@@ -75,6 +79,9 @@ var _ = Describe("Handlers", func() {
 
 			Expect(rsp).Should(HaveKeyWithValue("id", "foo"))
 			Expect(rsp).Should(HaveKeyWithValue("bar", "baz"))
+			Expect(rsp).Should(HaveKey("uuid"))
+			Expect(rsp).Should(HaveKey("createdAt"))
+			Expect(rsp).Should(HaveKey("updatedAt"))
 		})
 
 		It("should have 1 item", func() {
@@ -118,6 +125,10 @@ var _ = Describe("Handlers", func() {
 
 			Expect(rsp).Should(HaveKeyWithValue("id", "foo"))
 			Expect(rsp).Should(HaveKeyWithValue("bar", "baz"))
+			Expect(rsp).Should(HaveKey("uuid"))
+			Expect(rsp).Should(HaveKey("createdAt"))
+			Expect(rsp).Should(HaveKey("updatedAt"))
+			Expect(rsp["updatedAt"]).Should(Equal(rsp["createdAt"]))
 		})
 
 		It("should not be able to create again", func() {
@@ -145,7 +156,9 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("on creating an invalid item", Ordered, func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 
@@ -174,7 +187,9 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("after replacing an item", Ordered, func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 
@@ -229,11 +244,14 @@ var _ = Describe("Handlers", func() {
 			Expect(rsp).Should(HaveKeyWithValue("id", "foo"))
 			Expect(rsp).Should(HaveKeyWithValue("bar", "baz2"))
 			Expect(rsp).Should(HaveKeyWithValue("bool", true))
+			Expect(rsp["updatedAt"]).ShouldNot(Equal(rsp["createdAt"]))
 		})
 	})
 
 	Context("on replacing an item with invalid data", Ordered, func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 
@@ -278,7 +296,9 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("on replacing an not existed item", Ordered, func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 
@@ -307,7 +327,9 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("after deleting an item", Ordered, func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 
@@ -362,7 +384,9 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("on deleting an not existed item", Ordered, func() {
-		svc := NewStore()
+		var svc Service
+		svc = NewStore()
+		svc = NewAutoFields(svc)
 
 		h := NewHandler(svc)
 

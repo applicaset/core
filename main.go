@@ -8,7 +8,9 @@ import (
 )
 
 func main() {
-	svc := NewStore()
+	var svc Service
+	svc = NewStore()
+	svc = NewAutoFields(svc)
 
 	h := NewHandler(svc)
 
