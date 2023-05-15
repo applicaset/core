@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"net/http"
@@ -62,24 +61,13 @@ func CreateHandler(svc Service) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			var syntaxError *json.SyntaxError
+			// TODO: check whether it's a client error or not
+			w.WriteHeader(http.StatusBadRequest)
 
-			switch {
-			case errors.As(err, &syntaxError):
-				w.WriteHeader(http.StatusBadRequest)
-
-				_ = json.NewEncoder(w).Encode(HTTPError{
-					Message: "Invalid request",
-					Error:   err.Error(),
-				})
-			default:
-				w.WriteHeader(http.StatusInternalServerError)
-
-				_ = json.NewEncoder(w).Encode(HTTPError{
-					Message: "Unexpected error occurred",
-					Error:   err.Error(),
-				})
-			}
+			_ = json.NewEncoder(w).Encode(HTTPError{
+				Message: "Invalid request",
+				Error:   err.Error(),
+			})
 
 			return
 		}
@@ -149,24 +137,13 @@ func ReplaceHandler(svc Service) http.HandlerFunc {
 
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
-			var syntaxError *json.SyntaxError
+			// TODO: check whether it's a client error or not
+			w.WriteHeader(http.StatusBadRequest)
 
-			switch {
-			case errors.As(err, &syntaxError):
-				w.WriteHeader(http.StatusBadRequest)
-
-				_ = json.NewEncoder(w).Encode(HTTPError{
-					Message: "Invalid request",
-					Error:   err.Error(),
-				})
-			default:
-				w.WriteHeader(http.StatusInternalServerError)
-
-				_ = json.NewEncoder(w).Encode(HTTPError{
-					Message: "Unexpected error occurred",
-					Error:   err.Error(),
-				})
-			}
+			_ = json.NewEncoder(w).Encode(HTTPError{
+				Message: "Invalid request",
+				Error:   err.Error(),
+			})
 
 			return
 		}
