@@ -28,23 +28,24 @@ func NewHandler(svc Service) *Handler {
 
 	h.r = chi.NewRouter()
 
-	h.r.Get("/{kind}", ListHandler(svc))
-	h.r.Post("/{kind}", CreateHandler(svc))
-	h.r.Get("/{kind}/{id}", ReadHandler(svc))
-	h.r.Put("/{kind}/{id}", ReplaceHandler(svc))
-	h.r.Delete("/{kind}/{id}", DeleteHandler(svc))
+	h.r.Get("/{group}/{kind}", ListHandler(svc))
+	h.r.Post("/{group}/{kind}", CreateHandler(svc))
+	h.r.Get("/{group}/{kind}/{id}", ReadHandler(svc))
+	h.r.Put("/{group}/{kind}/{id}", ReplaceHandler(svc))
+	h.r.Delete("/{group}/{kind}/{id}", DeleteHandler(svc))
 
 	return h
 }
 
 func ListHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		group := chi.URLParam(r, "group")
 		kind := chi.URLParam(r, "kind")
 
-		res, err := svc.List(r.Context(), kind)
+		res, err := svc.List(r.Context(), GetGroupKind(group, kind))
 		if err != nil {
 			switch {
-			case errors.As(err, &KindNotFoundError{}):
+			case errors.As(err, &GroupKindNotFoundError{}):
 				w.WriteHeader(http.StatusNotFound)
 
 				_ = json.NewEncoder(w).Encode(HTTPError{
@@ -69,6 +70,7 @@ func ListHandler(svc Service) http.HandlerFunc {
 
 func CreateHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		group := chi.URLParam(r, "group")
 		kind := chi.URLParam(r, "kind")
 
 		var req GenericItem
@@ -86,7 +88,7 @@ func CreateHandler(svc Service) http.HandlerFunc {
 			return
 		}
 
-		err = svc.Create(r.Context(), kind, req)
+		err = svc.Create(r.Context(), GetGroupKind(group, kind), req)
 		if err != nil {
 			switch {
 			case errors.As(err, &ItemExistsError{}):
@@ -115,13 +117,14 @@ func CreateHandler(svc Service) http.HandlerFunc {
 
 func ReadHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		group := chi.URLParam(r, "group")
 		kind := chi.URLParam(r, "kind")
 		id := chi.URLParam(r, "id")
 
-		res, err := svc.Read(r.Context(), kind, id)
+		res, err := svc.Read(r.Context(), GetGroupKind(group, kind), id)
 		if err != nil {
 			switch {
-			case errors.As(err, &KindNotFoundError{}):
+			case errors.As(err, &GroupKindNotFoundError{}):
 				w.WriteHeader(http.StatusNotFound)
 
 				_ = json.NewEncoder(w).Encode(HTTPError{
@@ -153,6 +156,7 @@ func ReadHandler(svc Service) http.HandlerFunc {
 
 func ReplaceHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		group := chi.URLParam(r, "group")
 		kind := chi.URLParam(r, "kind")
 		id := chi.URLParam(r, "id")
 
@@ -171,10 +175,10 @@ func ReplaceHandler(svc Service) http.HandlerFunc {
 			return
 		}
 
-		err = svc.Replace(r.Context(), kind, id, req)
+		err = svc.Replace(r.Context(), GetGroupKind(group, kind), id, req)
 		if err != nil {
 			switch {
-			case errors.As(err, &KindNotFoundError{}):
+			case errors.As(err, &GroupKindNotFoundError{}):
 				w.WriteHeader(http.StatusNotFound)
 
 				_ = json.NewEncoder(w).Encode(HTTPError{
@@ -206,13 +210,14 @@ func ReplaceHandler(svc Service) http.HandlerFunc {
 
 func DeleteHandler(svc Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		group := chi.URLParam(r, "group")
 		kind := chi.URLParam(r, "kind")
 		id := chi.URLParam(r, "id")
 
-		err := svc.Delete(r.Context(), kind, id)
+		err := svc.Delete(r.Context(), GetGroupKind(group, kind), id)
 		if err != nil {
 			switch {
-			case errors.As(err, &KindNotFoundError{}):
+			case errors.As(err, &GroupKindNotFoundError{}):
 				w.WriteHeader(http.StatusNotFound)
 
 				_ = json.NewEncoder(w).Encode(HTTPError{

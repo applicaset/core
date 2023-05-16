@@ -10,12 +10,16 @@ type Store struct {
 	sync.Mutex
 }
 
-func (s *Store) List(ctx context.Context, kind string) ([]GenericItem, error) {
+func (s *Store) List(_ context.Context, groupKind string) ([]GenericItem, error) {
 	res := make([]GenericItem, len(s.db))
 
-	table, ok := s.db[kind]
+	table, ok := s.db[groupKind]
 	if !ok {
-		return nil, KindNotFoundError{Name: kind}
+		group, kind := GetGroupAndKind(groupKind)
+		return nil, GroupKindNotFoundError{
+			Group: group,
+			Kind:  kind,
+		}
 	}
 
 	i := 0
@@ -28,30 +32,34 @@ func (s *Store) List(ctx context.Context, kind string) ([]GenericItem, error) {
 	return res, nil
 }
 
-func (s *Store) Create(ctx context.Context, kind string, req GenericItem) error {
+func (s *Store) Create(_ context.Context, groupKind string, req GenericItem) error {
 	s.Lock()
 	defer s.Unlock()
 
-	_, ok := s.db[kind]
+	_, ok := s.db[groupKind]
 	if !ok {
-		s.db[kind] = make(map[string]GenericItem)
+		s.db[groupKind] = make(map[string]GenericItem)
 	}
 
-	for k := range s.db[kind] {
+	for k := range s.db[groupKind] {
 		if req.GetID() == k {
 			return ItemExistsError{ID: k}
 		}
 	}
 
-	s.db[kind][req.GetID()] = req
+	s.db[groupKind][req.GetID()] = req
 
 	return nil
 }
 
-func (s *Store) Read(ctx context.Context, kind string, id string) (GenericItem, error) {
-	table, ok := s.db[kind]
+func (s *Store) Read(_ context.Context, groupKind string, id string) (GenericItem, error) {
+	table, ok := s.db[groupKind]
 	if !ok {
-		return nil, KindNotFoundError{Name: kind}
+		group, kind := GetGroupAndKind(groupKind)
+		return nil, GroupKindNotFoundError{
+			Group: group,
+			Kind:  kind,
+		}
 	}
 
 	res, ok := table[id]
@@ -62,38 +70,46 @@ func (s *Store) Read(ctx context.Context, kind string, id string) (GenericItem, 
 	return res, nil
 }
 
-func (s *Store) Replace(ctx context.Context, kind string, id string, req GenericItem) error {
+func (s *Store) Replace(_ context.Context, groupKind string, id string, req GenericItem) error {
 	s.Lock()
 	defer s.Unlock()
 
-	table, ok := s.db[kind]
+	table, ok := s.db[groupKind]
 	if !ok {
-		return KindNotFoundError{Name: kind}
+		group, kind := GetGroupAndKind(groupKind)
+		return GroupKindNotFoundError{
+			Group: group,
+			Kind:  kind,
+		}
 	}
 
 	if _, ok := table[id]; !ok {
 		return ItemNotFoundError{ID: id}
 	}
 
-	s.db[kind][id] = req
+	s.db[groupKind][id] = req
 
 	return nil
 }
 
-func (s *Store) Delete(ctx context.Context, kind string, id string) error {
+func (s *Store) Delete(_ context.Context, groupKind string, id string) error {
 	s.Lock()
 	defer s.Unlock()
 
-	table, ok := s.db[kind]
+	table, ok := s.db[groupKind]
 	if !ok {
-		return KindNotFoundError{Name: kind}
+		group, kind := GetGroupAndKind(groupKind)
+		return GroupKindNotFoundError{
+			Kind:  kind,
+			Group: group,
+		}
 	}
 
 	if _, ok := table[id]; !ok {
 		return ItemNotFoundError{ID: id}
 	}
 
-	delete(s.db[kind], id)
+	delete(s.db[groupKind], id)
 
 	return nil
 }

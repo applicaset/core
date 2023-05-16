@@ -18,10 +18,11 @@ func (err ItemNotFoundError) Error() string {
 	return fmt.Sprintf("item with id '%s' not found", err.ID)
 }
 
-type KindNotFoundError struct {
-	Name string
+type GroupKindNotFoundError struct {
+	Group string
+	Kind  string
 }
 
-func (err KindNotFoundError) Error() string {
-	return fmt.Sprintf("kind with name '%s' not found", err.Name)
+func (err GroupKindNotFoundError) Error() string {
+	return fmt.Sprintf("kind with group '%s' and name '%s' not found", err.Group, err.Kind)
 }

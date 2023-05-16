@@ -29,7 +29,7 @@ var _ = Describe("Handlers", func() {
 		h := NewHandler(svc)
 
 		It("should fail on list unknown kind", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+			req := httptest.NewRequest(http.MethodGet, "/acme/foo", nil)
 
 			w := httptest.NewRecorder()
 
@@ -58,7 +58,7 @@ var _ = Describe("Handlers", func() {
 		BeforeAll(func() {
 			reqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			req := httptest.NewRequest(http.MethodPost, "/foo", reqBody)
+			req := httptest.NewRequest(http.MethodPost, "/acme/foo", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -84,7 +84,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should have 1 item", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo", nil)
+			req := httptest.NewRequest(http.MethodGet, "/acme/foo", nil)
 
 			w := httptest.NewRecorder()
 
@@ -105,7 +105,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should be able to read", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo/foo1", nil)
+			req := httptest.NewRequest(http.MethodGet, "/acme/foo/foo1", nil)
 
 			w := httptest.NewRecorder()
 
@@ -132,7 +132,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should fail on read from unknown kind", func() {
-			req := httptest.NewRequest(http.MethodGet, "/bar/bar1", nil)
+			req := httptest.NewRequest(http.MethodGet, "/acme/bar/bar1", nil)
 
 			w := httptest.NewRecorder()
 
@@ -153,7 +153,7 @@ var _ = Describe("Handlers", func() {
 		It("should not be able to create again", func() {
 			reqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			req := httptest.NewRequest(http.MethodPost, "/foo", reqBody)
+			req := httptest.NewRequest(http.MethodPost, "/acme/foo", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -183,7 +183,7 @@ var _ = Describe("Handlers", func() {
 
 		reqBody := bytes.NewBufferString(`{"id":"foo1","bar":INVALID JSON}`)
 
-		req := httptest.NewRequest(http.MethodPost, "/foo", reqBody)
+		req := httptest.NewRequest(http.MethodPost, "/acme/foo", reqBody)
 
 		w := httptest.NewRecorder()
 
@@ -215,7 +215,7 @@ var _ = Describe("Handlers", func() {
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/acme/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -229,7 +229,7 @@ var _ = Describe("Handlers", func() {
 
 			updateReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz2", "bool": true}`)
 
-			updateReq := httptest.NewRequest(http.MethodPut, "/foo/foo1", updateReqBody)
+			updateReq := httptest.NewRequest(http.MethodPut, "/acme/foo/foo1", updateReqBody)
 
 			w2 := httptest.NewRecorder()
 
@@ -243,7 +243,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should be updated", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo/foo1", nil)
+			req := httptest.NewRequest(http.MethodGet, "/acme/foo/foo1", nil)
 
 			w := httptest.NewRecorder()
 
@@ -278,7 +278,7 @@ var _ = Describe("Handlers", func() {
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/acme/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -294,7 +294,7 @@ var _ = Describe("Handlers", func() {
 		It("should fail", func() {
 			reqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz2", BAD JSON}`)
 
-			req := httptest.NewRequest(http.MethodPut, "/foo/foo1", reqBody)
+			req := httptest.NewRequest(http.MethodPut, "/acme/foo/foo1", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -325,7 +325,7 @@ var _ = Describe("Handlers", func() {
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/acme/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -341,7 +341,7 @@ var _ = Describe("Handlers", func() {
 		It("should fail", func() {
 			reqBody := bytes.NewBufferString(`{"id":"foo2","bar":"baz2", "bool": true}`)
 
-			req := httptest.NewRequest(http.MethodPut, "/foo/foo2", reqBody)
+			req := httptest.NewRequest(http.MethodPut, "/acme/foo/foo2", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -364,7 +364,7 @@ var _ = Describe("Handlers", func() {
 		It("should fail on replace in unknown kind", func() {
 			reqBody := bytes.NewBufferString(`{"id":"foo2","bar":"baz2", "bool": true}`)
 
-			req := httptest.NewRequest(http.MethodPut, "/bar/bar2", reqBody)
+			req := httptest.NewRequest(http.MethodPut, "/acme/bar/bar2", reqBody)
 
 			w := httptest.NewRecorder()
 
@@ -395,7 +395,7 @@ var _ = Describe("Handlers", func() {
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/acme/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -407,7 +407,7 @@ var _ = Describe("Handlers", func() {
 
 			Expect(createRes.StatusCode).Should(Equal(http.StatusCreated))
 
-			deleteReq := httptest.NewRequest(http.MethodDelete, "/foo/foo1", nil)
+			deleteReq := httptest.NewRequest(http.MethodDelete, "/acme/foo/foo1", nil)
 
 			w2 := httptest.NewRecorder()
 
@@ -421,7 +421,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should be not found", func() {
-			req := httptest.NewRequest(http.MethodGet, "/foo/foo1", nil)
+			req := httptest.NewRequest(http.MethodGet, "/acme/foo/foo1", nil)
 
 			w := httptest.NewRecorder()
 
@@ -452,7 +452,7 @@ var _ = Describe("Handlers", func() {
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
 
-			createReq := httptest.NewRequest(http.MethodPost, "/foo", createReqBody)
+			createReq := httptest.NewRequest(http.MethodPost, "/acme/foo", createReqBody)
 
 			w := httptest.NewRecorder()
 
@@ -466,7 +466,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should fail", func() {
-			req := httptest.NewRequest(http.MethodDelete, "/foo/foo2", nil)
+			req := httptest.NewRequest(http.MethodDelete, "/acme/foo/foo2", nil)
 
 			w := httptest.NewRecorder()
 
@@ -487,7 +487,7 @@ var _ = Describe("Handlers", func() {
 		})
 
 		It("should fail on delete from unknown kind", func() {
-			req := httptest.NewRequest(http.MethodDelete, "/bar/bar1", nil)
+			req := httptest.NewRequest(http.MethodDelete, "/acme/bar/bar1", nil)
 
 			w := httptest.NewRecorder()
 
