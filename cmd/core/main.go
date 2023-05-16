@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
+	"github.com/applicaset/core"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/nasermirzaei89/env"
 	"net/http"
 )
 
 func main() {
-	var svc Service
-	svc = NewStore()
-	svc = NewAutoFields(svc)
+	var svc core.Service
+	svc = core.NewStore()
+	svc = core.NewAutoFields(svc)
 
-	h := NewHandler(svc)
+	h := core.NewHandler(svc)
 
 	apiAddress := env.GetString("API_ADDRESS", ":8080")
 

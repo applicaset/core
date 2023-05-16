@@ -1,7 +1,9 @@
-package main
+package core_test
 
 import (
 	"bytes"
+	"encoding/json"
+	"github.com/applicaset/core"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"net/http"
@@ -22,11 +24,11 @@ var _ = BeforeSuite(func() {
 
 var _ = Describe("Handlers", func() {
 	Context("with fresh store", func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		It("should fail on list unknown kind", func() {
 			req := httptest.NewRequest(http.MethodGet, "/acme/foo", nil)
@@ -49,11 +51,11 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("after creating an item", Ordered, func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		BeforeAll(func() {
 			reqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
@@ -96,7 +98,7 @@ var _ = Describe("Handlers", func() {
 
 			Expect(res.StatusCode).Should(Equal(http.StatusOK))
 
-			var rsp ListResponse
+			var rsp core.ListResponse
 
 			err := json.NewDecoder(res.Body).Decode(&rsp)
 			Expect(err).ShouldNot(HaveOccurred())
@@ -175,11 +177,11 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("on creating an invalid item", Ordered, func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		reqBody := bytes.NewBufferString(`{"id":"foo1","bar":INVALID JSON}`)
 
@@ -206,11 +208,11 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("after replacing an item", Ordered, func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
@@ -269,11 +271,11 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("on replacing an item with invalid data", Ordered, func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
@@ -316,11 +318,11 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("on replacing an not existed item", Ordered, func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
@@ -386,11 +388,11 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("after deleting an item", Ordered, func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
@@ -443,11 +445,11 @@ var _ = Describe("Handlers", func() {
 	})
 
 	Context("on deleting an not existed item", Ordered, func() {
-		var svc Service
-		svc = NewStore()
-		svc = NewAutoFields(svc)
+		var svc core.Service
+		svc = core.NewStore()
+		svc = core.NewAutoFields(svc)
 
-		h := NewHandler(svc)
+		h := core.NewHandler(svc)
 
 		BeforeAll(func() {
 			createReqBody := bytes.NewBufferString(`{"id":"foo1","bar":"baz"}`)
